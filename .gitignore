@@ -58,3 +58,20 @@ target/
 # IPython
 profile_default/
 ipython_config.py
+
+# Python virtual environment
+/python/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local settings and secrets - DO NOT COMMIT
+hajimi/settings.json
+*.env
+
+# IDE and editor directories
+.vscode/
+.idea/

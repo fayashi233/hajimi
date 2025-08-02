@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  hajimi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hajimi-local
+    container_name: hajimi-app
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - ENABLE_STORAGE=true
+    volumes:
+      - ../settings:/hajimi/settings
+    restart: unless-stopped
