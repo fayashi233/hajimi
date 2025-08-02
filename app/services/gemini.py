@@ -335,6 +335,51 @@ class GeminiClient:
         except Exception as e:
             raise
 
+    @staticmethod
+    async def list_models_native(api_key: str) -> List[Dict[str, Any]]:
+        """
+        Fetches the list of available models in their native Gemini API format.
+        """
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+                return data.get("models", [])
+            except httpx.HTTPStatusError as e:
+                # Propagate error to be handled by the endpoint
+                raise Exception(f"Failed to fetch models from Gemini API: {e.response.text}") from e
+            except Exception as e:
+                raise Exception(f"An unexpected error occurred while fetching models: {str(e)}") from e
+
+    async def generate_content_native(self, model: str, data: Dict[str, Any]):
+        """
+        Handles native non-streaming requests to Gemini API.
+        """
+        api_version = "v1alpha" if "think" in model else "v1beta"
+        url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model}:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=data, timeout=600)
+            response.raise_for_status()
+            return response.json()
+
+    async def stream_generate_content_native(self, model: str, data: Dict[str, Any]):
+        """
+        Handles native streaming requests to Gemini API.
+        """
+        api_version = "v1alpha" if "think" in model else "v1beta"
+        url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model}:streamGenerateContent?key={self.api_key}&alt=sse"
+        headers = {"Content-Type": "application/json"}
+        
+        async with httpx.AsyncClient() as client:
+            async with client.stream("POST", url, headers=headers, json=data, timeout=600) as response:
+                response.raise_for_status()
+                async for chunk in response.aiter_bytes():
+                    yield chunk
+
     # OpenAI 格式请求转换为 gemini 格式请求
     def convert_messages(self, messages, use_system_prompt=False, model=None):
         gemini_history = []

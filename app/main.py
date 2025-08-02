@@ -16,7 +16,7 @@ from app.utils import (
     log
 )
 from app.config.persistence import save_settings, load_settings
-from app.api import router, init_router, dashboard_router, init_dashboard_router
+from app.api import router, init_router, dashboard_router, init_dashboard_router, gemini_routes
 from app.vertex.vertex_ai_init import init_vertex_ai
 from app.vertex.credentials_manager import CredentialManager
 import app.config.settings as settings
@@ -225,6 +225,8 @@ async def startup_event():
         active_requests_manager,
         credential_manager_instance
     )
+    # 初始化Gemini原生路由
+    gemini_routes.init_gemini_router(key_manager)
 
 # --------------- 异常处理 ---------------
 
@@ -240,6 +242,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(router)
 app.include_router(dashboard_router)
+app.include_router(gemini_routes.router)
 
 # 挂载静态文件目录
 app.mount("/assets", StaticFiles(directory="app/templates/assets"), name="assets")

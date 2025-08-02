@@ -4,6 +4,8 @@ import os
 import logging
 import asyncio
 from datetime import datetime, timedelta
+from typing import Optional
+from fastapi import HTTPException, Header, Query, status
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.utils.logging import format_log_message
 import app.config.settings as settings
@@ -85,3 +87,28 @@ async def test_api_key(api_key: str) -> bool:
             return True
     except Exception:
         return False
+
+async def get_api_key(
+    authorization: Optional[str] = Header(None, description="API Key in 'Bearer <key>' format."),
+    x_goog_api_key: Optional[str] = Header(None, description="Google-style API Key header."),
+    key: Optional[str] = Query(None, description="API Key as a query parameter.")
+) -> str:
+    """
+    Dependency to extract an API key from the request.
+    Looks for the key in:
+    1. `Authorization: Bearer <key>` header
+    2. `x-goog-api-key` header
+    3. `key` query parameter
+    Raises a 401 HTTPException if the key is not found.
+    """
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.split(" ", 1)[1]
+    if x_goog_api_key:
+        return x_goog_api_key
+    if key:
+        return key
+        
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="API key is missing. Provide it in 'Authorization: Bearer <key>', 'x-goog-api-key' header, or 'key' query parameter.",
+    )
