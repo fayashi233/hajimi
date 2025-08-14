@@ -258,7 +258,7 @@ class GeminiClient:
                 tool_config = {"function_calling_config": config}
         
         # 3. 添加 tool_config 到 data
-        if tool_config:
+        if tool_config and data.get("tools"):
             data["tool_config"] = tool_config
 
         if system_instruction:
@@ -515,3 +515,16 @@ class GeminiClient:
             models.extend(GeminiClient.EXTRA_MODELS)
                 
             return models
+
+    @staticmethod
+    async def list_native_models(api_key):
+        """
+        获取原生Gemini模型列表
+        """
+        url = "https://generativelanguage.googleapis.com/v1beta/models?key={}".format(
+            api_key)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            return response.json()
+
